@@ -12,6 +12,10 @@ data class DiaryUiState(
 data class PlaceEntry(
     val id: Int,
     val images: List<Uri> = emptyList(),
-    val placeDescription: String = ""
-    // 장소이름 string?
+    val placeDescription: String = "",
+    val placeName: String = "",
+    val latitude: Double = -1.0,
+    val longitude: Double = -1.0
+    // val simpleReview: String = ""
+    // 한줄평
 )

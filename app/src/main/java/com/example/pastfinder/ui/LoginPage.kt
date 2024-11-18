@@ -38,7 +38,6 @@ fun LoginPage(
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    var isLoggedIn by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -46,15 +45,6 @@ fun LoginPage(
             TopAppBar(
                 title = {
                     Text( text = "Login Page")
-                },
-                actions = {
-                    IconButton(onClick = {
-                        logout()
-                        isLoggedIn = false
-                    }
-                    ) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "logout")
-                    }
                 }
             )
         }
@@ -99,15 +89,11 @@ fun LoginPage(
                     /* 추후 수정 */
                     navController.navigate(route = "mainScreen")
                     loginUser(email, password)
-                    isLoggedIn = true
                 }
             ) {
                 Text( text = "Login")
             }
 
-            if(isLoggedIn) {
-                /* 추후 구현 */
-            }
         }
     }
 }
@@ -116,6 +102,3 @@ fun loginUser(email: String, password: String) {
     /* 추후 구현 */
 }
 
-fun logout() {
-    /* 추후 구현 */
-}

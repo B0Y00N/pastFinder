@@ -3,11 +3,14 @@ package com.example.pastfinder.ui
 
 import android.widget.CalendarView
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -15,14 +18,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -47,12 +53,24 @@ fun MainScreen(
     var yearState by rememberSaveable { mutableStateOf(formatter.format(date).split("-").first()) }
     var monthState by rememberSaveable { mutableStateOf(formatter.format(date).split("-")[1]) }
     var dayState by rememberSaveable { mutableStateOf(formatter.format(date).split("-").last()) }
+    var isLoggedIn by rememberSaveable { mutableStateOf(true) }
 
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text(text = "PASTFINDER") })
+            TopAppBar(
+                title = { Text(text = "PASTFINDER") },
+                actions = {
+                    IconButton(onClick = {
+                        logout()
+                        isLoggedIn = false
+                    }
+                    ) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "logout")
+                    }
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -117,28 +135,44 @@ fun MainScreen(
                         )
                     }
                 } else {
-                    FilledTonalButton(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = Color.White
-                        ),
-                        onClick = {
-                            navController.navigate("readDiaryPage/${yearState}/${monthState}/${dayState}")
-                        }
+                            .padding(16.dp)
                     ) {
-                        Text(
-                            modifier = Modifier.padding(32.dp),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            text = "일기 읽어보기"
-                        )
+                        FilledTonalButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = Color.White
+                            ),
+                            onClick = {
+                                navController.navigate("readDiaryPage/${yearState}/${monthState}/${dayState}")
+                            }
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(32.dp),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                text = "일기 읽어보기"
+                            )
+                        }
+                        TextButton(
+                            modifier = Modifier.align(Alignment.End),
+                            onClick = { diaryViewModel.deleteDiary("$yearState-$monthState-$dayState")}
+                        ) {
+                            Text(text = "삭제할래요")
+                        }
                     }
+
                 }
 
             }
         }
     }
+}
+
+
+fun logout() {
+    /* 추후 구현 */
 }

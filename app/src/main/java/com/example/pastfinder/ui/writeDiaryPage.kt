@@ -89,8 +89,6 @@ fun WriteDiaryPage(
                 navigationIcon = {
                     IconButton(onClick = {
                         //임시저장 할 것인지 고민 필요
-                        //왜 제대로 삭제가 안되냐...ㅠㅠ
-                        diaryViewModel.deleteDate(date)
                         navController.navigateUp()
                     }) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기")
@@ -99,7 +97,10 @@ fun WriteDiaryPage(
                 actions = {
                     // 지도 아이콘 버튼 추가
                     IconButton(onClick = {
-                        //지도 페이지로 이동하는 네비게이션 액션 추가
+                        // 위도와 경도 리스트
+                        val locationList = diaryUiState.placeEntries.map { it.latitude to it.longitude }
+                        /* 위 변수 활용해서 지도 페이지로 이동하는 네비게이션 액션 추가 */
+                        /* 예시: navController.navigate("mapPage/@@@@")*/
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Place,
@@ -128,7 +129,10 @@ fun WriteDiaryPage(
         item {
             Button(
                 onClick = {
-                    //추가 전에 장소 검색하는 페이지 추가 필요
+                    selectedID = diaryUiState.placeEntries.size + 1
+                    /* 장소 검색하는 페이지 추가 필요 */
+                    /* 예시: navController.navigate("searchPlacePage/@@@@") */
+                    /* 해당 페이지에서 diaryViewModel.updatePlaceInfo() 함수 호출해야함! */
                     // 새로운 DiaryEntry를 리스트에 추가
                     val newEntry = PlaceEntry(id = diaryUiState.placeEntries.size + 1)
                     diaryViewModel.addPlaceEntry(newEntry)  // 새로운 장소 추가

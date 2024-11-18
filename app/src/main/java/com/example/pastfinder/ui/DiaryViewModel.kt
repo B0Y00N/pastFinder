@@ -12,9 +12,7 @@ import kotlinx.coroutines.flow.update
 
 class DiaryViewModel : ViewModel() {
 
-    private var diaryMap by mutableStateOf<Map<String, DiaryUiState>>(emptyMap())
-    // 작성된 일기가 있는 날짜를 저장하는 Set
-    private var dateSet by mutableStateOf<Set<String>>(emptySet())
+    private var diarySet by mutableStateOf<Set<DiaryUiState>>(emptySet())
     // 선택된 날짜의 Diary state
     private var _uiState = MutableStateFlow(DiaryUiState())
     var uiState: StateFlow<DiaryUiState> = _uiState.asStateFlow()
@@ -23,10 +21,12 @@ class DiaryViewModel : ViewModel() {
     fun createDiary(date: String) {
         _uiState.update { currentState ->
             currentState.copy(
-                date = date
+                date = date,
+                title = "",
+                totalReview = "",
+                placeEntries = emptyList()
             )
         }
-        dateSet = dateSet.plus(date) // 날짜 추가
     }
 
     // title을 업데이트하는 함수
@@ -52,6 +52,26 @@ class DiaryViewModel : ViewModel() {
         _uiState.update { currentState ->
             currentState.copy(
                 placeEntries = currentState.placeEntries + placeEntry
+            )
+        }
+    }
+
+    // 장소 검색 페이지에서 호출하는 함수
+    fun updatePlaceInfo(id: Int, place: String, latitude: Double, longitude: Double) {
+        _uiState.update { currentState ->
+            val updatedPlaceEntries = currentState.placeEntries.map { placeEntry ->
+                if (placeEntry.id == id) {
+                    placeEntry.copy(
+                        placeName = place,
+                        latitude = latitude,
+                        longitude = longitude
+                    )
+                } else {
+                    placeEntry
+                }
+            }
+            currentState.copy(
+                placeEntries = updatedPlaceEntries
             )
         }
     }
@@ -105,21 +125,22 @@ class DiaryViewModel : ViewModel() {
         //entryId update 해야함
     }
 
-    // 날짜를 인자로 받아 해당 날짜를 삭제하는 함수
-    fun deleteDate(date: String) {
-        dateSet = dateSet.minus(date)
-    }
-
     // 날짜에 해당하는 Diary 있는지 확인하는 함수
-    fun isDiaryWritten(date: String): Boolean = dateSet.any { it == date }
+    fun isDiaryWritten(date: String): Boolean = diarySet.any { it.date == date }
 
     // DB에 저장하는 함수 꼭!! 추가해야함
     fun saveDiary() {
-        diaryMap = diaryMap.plus(_uiState.value.date to _uiState.value)
+        diarySet = diarySet.plus(_uiState.value)
     }
 
-    // 일기 읽을 때...?
+    // 일기 읽을 때
     fun getDiary(date: String): DiaryUiState {
-        return diaryMap.get(date)!!
+        return diarySet.find { it.date == date }!!
+    }
+
+    // 일기 삭제
+    fun deleteDiary(date: String) {
+        val diaryToRemove = diarySet.find { it.date == date }
+        diarySet = diarySet.minus(diaryToRemove!!)
     }
 }

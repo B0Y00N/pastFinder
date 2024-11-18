@@ -37,7 +37,6 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     startDestination = "loginPage"
                 ) {
-                    //후에 startDestination 로그인 페이지로 수정할 것
                     composable(route = "loginPage") {
                         LoginPage(navController = navController) {
                             navController.navigate("registerPage")
@@ -98,6 +97,10 @@ class MainActivity : ComponentActivity() {
                     composable(route = "reminderPage") {
                         ReminderPage(navController = navController, reminderViewModel = reminderViewModel)
                     }
+
+                    /* 장소 검색 페이지와
+                    *  지도 마킹 페이지 컴포저블
+                    *  각각 추가 */
                 }
             }
         }
