@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.example.pastfinder.ui.DiaryViewModel
 import com.example.pastfinder.ui.LoginPage
 import com.example.pastfinder.ui.MainScreen
+import com.example.pastfinder.ui.MapsScreen
 import com.example.pastfinder.ui.ReadDiaryPage
 import com.example.pastfinder.ui.RegisterPage
 import com.example.pastfinder.ui.ReminderPage
@@ -99,6 +100,9 @@ class MainActivity : ComponentActivity() {
                         ReminderPage(navController = navController, reminderViewModel = reminderViewModel)
                     }
 
+                    composable(route = "map"){
+                        MapsScreen(navController = navController)
+                    }
                     /* 장소 검색 페이지와
                     *  지도 마킹 페이지 컴포저블
                     *  각각 추가 */

@@ -12,6 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PastFinder"
         tools:targetApi="31">
+
+        <!-- Google Maps API 키를 추가 -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyD3xTB3LouXLK652qAPKYll2rhuwZEaMHo" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

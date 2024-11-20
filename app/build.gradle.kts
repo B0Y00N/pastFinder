@@ -71,4 +71,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     //navigation
     implementation(libs.androidx.navigation.compose)
+
+    // Google Maps SDK (Compose)
+    implementation ("com.google.android.gms:play-services-maps:18.0.2")
+    implementation ("com.google.maps.android:maps-compose:2.3.0")  // Google Maps Compose
+
+    // Coroutine support
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 }

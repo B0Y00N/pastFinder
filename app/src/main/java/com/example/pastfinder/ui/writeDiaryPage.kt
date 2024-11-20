@@ -99,6 +99,7 @@ fun WriteDiaryPage(
                     IconButton(onClick = {
                         // 위도와 경도 리스트
                         val locationList = diaryUiState.placeEntries.map { it.latitude to it.longitude }
+                        navController.navigate("map")
                         /* 위 변수 활용해서 지도 페이지로 이동하는 네비게이션 액션 추가 */
                         /* 예시: navController.navigate("mapPage/@@@@")*/
                     }) {
