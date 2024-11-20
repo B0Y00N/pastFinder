@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PastFinderTheme {
 
+
                 val diaryViewModel = viewModel<DiaryViewModel>()
                 val reminderViewModel = viewModel<ReminderViewModel>()
 
