@@ -11,7 +11,7 @@ data class DiaryUiState(
 
 data class PlaceEntry(
     val id: Int,
-    val images: List<Uri> = emptyList(),
+    val images: List<String> = emptyList(),
     val placeDescription: String = "",
     val placeName: String = "",
     val latitude: Double = -1.0,

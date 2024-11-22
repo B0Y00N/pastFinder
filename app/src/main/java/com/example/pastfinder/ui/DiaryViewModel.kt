@@ -77,7 +77,7 @@ class DiaryViewModel : ViewModel() {
     }
 
     // placeEntry에 이미지 추가하는 함수
-    fun addImages(entryId: Int, images: List<Uri>) {
+    fun addImages(entryId: Int, images: List<String>) {
         _uiState.update { currentState ->
             val updatedPlaceEntries = currentState.placeEntries.map { placeEntry ->
                 if (placeEntry.id == entryId) {
