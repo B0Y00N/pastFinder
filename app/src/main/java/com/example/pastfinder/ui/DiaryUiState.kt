@@ -1,7 +1,5 @@
 package com.example.pastfinder.ui
 
-import android.net.Uri
-
 data class DiaryUiState(
     var date: String = "",
     var title: String = "",
