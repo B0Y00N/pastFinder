@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -143,15 +142,16 @@ fun PlaceCard(placeEntry: PlaceEntry) {
                 // 이미지 표시
                 if (placeEntry.images.isNotEmpty()) {
                     LazyColumn (modifier = Modifier.height(200.dp)) {
-                        items(placeEntry.images) { uri ->
-                            val imageBitmap = UriUtils().uriToBitmap(LocalContext.current, uri)?.asImageBitmap()
-                            imageBitmap?.let {
+                        items(placeEntry.images) { base64Image ->
+                            val bitmap = base64ToBitmap(base64Image)
+                            bitmap?.let {
                                 Image(
-                                    bitmap = it,
+                                    bitmap = it.asImageBitmap(),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .height(180.dp)
                                         .clip(RoundedCornerShape(10.dp))
                                 )
                             }

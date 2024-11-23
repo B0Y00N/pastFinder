@@ -1,12 +1,10 @@
 package com.example.pastfinder.ui
 
-import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -56,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,12 +74,18 @@ fun WriteDiaryPage(
 
     var selectedID by rememberSaveable { mutableStateOf(-1) }
 
+    val context = LocalContext.current
+
     val pickMultipleImagesLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
             if (uris.isNotEmpty() && selectedID != -1) {
-                diaryViewModel.addImages(entryId = selectedID, images = uris)
+                val base64Images = uris.map { uri ->
+                    uriToBase64(context = context, uri = uri)
+                }.filterNotNull()
+                diaryViewModel.addImages(entryId = selectedID, images = base64Images)
             }
         }
+
 
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -247,11 +253,11 @@ fun PlaceEntryCard(
                 // 이미지 표시
                 if (placeEntry.images.isNotEmpty()) {
                     LazyRow(modifier = Modifier.height(200.dp)) {
-                        items(placeEntry.images) { uri ->
-                            val imageBitmap = UriUtils().uriToBitmap(LocalContext.current, uri)?.asImageBitmap()
-                            imageBitmap?.let {
+                        items(placeEntry.images) { base64Image ->
+                            val bitmap = base64ToBitmap(base64Image)
+                            bitmap?.let {
                                 Image(
-                                    bitmap = it,
+                                    bitmap = it.asImageBitmap(),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
@@ -262,6 +268,7 @@ fun PlaceEntryCard(
                             }
                         }
                     }
+
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -286,16 +293,31 @@ fun PlaceEntryCard(
 }
 
 
-class UriUtils {
-    fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
-        val contentResolver: ContentResolver = context.contentResolver
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            val source = ImageDecoder.createSource(contentResolver, uri)
-            ImageDecoder.decodeBitmap(source)
-        } else {
-            context.contentResolver.openInputStream(uri)?.use { stream ->
-                BitmapFactory.decodeStream(stream)
-            }
-        }
+fun base64ToBitmap(base64String: String): Bitmap? {
+    try {
+        val decodedString = Base64.decode(base64String, Base64.DEFAULT)
+        return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
+    }
+}
+
+
+fun uriToBase64(context: Context, uri: Uri): String? {
+    try {
+        val inputStream: InputStream = context.contentResolver.openInputStream(uri) ?: return null
+        val bitmap: Bitmap = BitmapFactory.decodeStream(inputStream)
+
+        // Bitmap을 바이트 배열로 변환
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+
+        // Base64로 인코딩
+        return Base64.encodeToString(byteArray, Base64.DEFAULT)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
     }
 }
