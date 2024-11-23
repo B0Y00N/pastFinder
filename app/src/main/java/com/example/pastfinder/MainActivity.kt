@@ -103,6 +103,10 @@ class MainActivity : ComponentActivity() {
                     composable(route = "map"){
                         MapsScreen(navController = navController)
                     }
+
+                    composable(route = "mapSearch"){
+                        PlaceFinderScreen(navController = navController)
+                    }
                     /* 장소 검색 페이지와
                     *  지도 마킹 페이지 컴포저블
                     *  각각 추가 */
@@ -111,4 +115,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

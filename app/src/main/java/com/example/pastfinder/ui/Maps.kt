@@ -31,6 +31,8 @@ fun MapsScreen(
         )
     }
 
+
+
     // 지도 화면 표시
     // GoogleMap 컴포저블을 사용하여 지도 표시
     GoogleMap(
