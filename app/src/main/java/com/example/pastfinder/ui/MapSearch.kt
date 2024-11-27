@@ -1,4 +1,4 @@
-package com.example.pastfinder
+package com.example.pastfinder.ui
 
 import android.content.Context
 import android.content.Intent
@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import androidx.activity.viewModels
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Place
@@ -47,129 +48,129 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class MapSearchActivity : ComponentActivity() {
-
-    // 권한 요청 결과를 처리할 콜백 함수
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                // 권한이 허용된 경우 API 호출 시작
-                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show()
-            } else {
-                // 권한이 거부된 경우 사용자에게 알림
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // 항상 Places API를 초기화합니다.
         if (!Places.isInitialized()) {
-            Places.initialize(applicationContext, "")
+            Places.initialize(applicationContext, "AIzaSyAYBaY6MNaZyAlVUOcADqOZC9jBnSC1T2E")
         }
 
         // 위치 권한 확인
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
             // 위치 권한이 없다면 권한 요청
-            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
         setContent {
             val navController = rememberNavController()
-            PlaceFinderScreen(navController)
+            val diaryViewModel: DiaryViewModel by viewModels()
+            val id = intent.getIntExtra("id", 0)
+
+            PlaceFinderScreen(
+                navController = navController,
+                diaryViewModel = diaryViewModel,
+                id = id
+            )
         }
     }
+
+    // 권한 요청 결과를 처리할 콜백 함수
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
 }
 
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun PlaceFinderScreen(navController: NavController) {
-    var query by remember { mutableStateOf("") }
-    var places by remember { mutableStateOf<List<Place>>(emptyList()) }
-    var loading by remember { mutableStateOf(false) }
-
+fun PlaceFinderScreen(navController: NavController, diaryViewModel: DiaryViewModel, id: Int) {
+    val placeFinderState = diaryViewModel.placeFinderState
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        TextField(
-            value = query,
-            onValueChange = { query = it },
-            label = { Text("Search Places") },
-            modifier = Modifier.fillMaxWidth()
-        )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Place Finder") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .padding(paddingValues)
+        ) {
+            TextField(
+                value = placeFinderState.query,
+                onValueChange = { diaryViewModel.updatePlaceFinder(it) },
+                label = { Text("Search Places") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                if (query.isNotBlank()) {
-                    loading = true
-                    coroutineScope.launch {
-                        searchPlaces(context, query) { result ->
-                            places = result
-                            loading = false
+            Button(
+                onClick = { diaryViewModel.searchingPlaces(context) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Search")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (placeFinderState.loading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                LazyColumn {
+                    items(placeFinderState.places) { place ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(horizontal = 10.dp)
+                                .clickable {
+                                    if (place.latLng != null) {
+                                        val latitude = place.latLng!!.latitude.toFloat()
+                                        val longitude = place.latLng!!.longitude.toFloat()
+                                        navController.navigate("mapScreenWithMarker/$id/$latitude/$longitude/${place.name}")
+                                    } else {
+                                        Toast.makeText(context, "Location not available", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Place,
+                                contentDescription = "위치 아이콘"
+                            )
+                            Text(
+                                text = place.name ?: "Unknown Place",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier
+                                    .padding(vertical = 20.dp, horizontal = 10.dp)
+                                    .fillMaxWidth()
+                            )
                         }
                     }
-                } else {
-                    Toast.makeText(
-                        context,
-                        "Please enter a search query",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Search")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (loading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else {
-            LazyColumn {
-                items(places) { place ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(horizontal = 10.dp)
-                            .clickable {
-                                if (place.latLng != null) {
-                                    val intent = Intent(context, MapsActivity::class.java).apply {
-                                        putExtra("PLACE_LAT", place.latLng!!.latitude)
-                                        putExtra("PLACE_LNG", place.latLng!!.longitude)
-                                        putExtra("PLACE_NAME", place.name)
-                                    }
-                                    context.startActivity(intent)
-                                } else {
-                                    Toast.makeText(context, "Location not available", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Place,
-                            contentDescription = "위치 아이콘"
-                        )
-                        Text(
-                            text = place.name ?: "Unknown Place",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier
-                                .padding(vertical = 20.dp, horizontal = 10.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-
                 }
             }
         }
     }
 }
+
+
 
 @SuppressLint("MissingPermission")
 suspend fun searchPlaces(context: Context, query: String, onResult: (List<Place>) -> Unit) {
@@ -216,7 +217,14 @@ suspend fun searchPlaces(context: Context, query: String, onResult: (List<Place>
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapsScreenWithMarker(navController: NavController, latitude: Double, longitude: Double, name: String) {
+fun MapsScreenWithMarker(
+    navController: NavController,
+    diaryViewModel: DiaryViewModel,
+    id: Int,
+    latitude: Double,
+    longitude: Double,
+    name: String
+) {
     val location = LatLng(latitude, longitude)
 
     // 카메라 설정
@@ -244,7 +252,7 @@ fun MapsScreenWithMarker(navController: NavController, latitude: Double, longitu
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
@@ -266,25 +274,22 @@ fun MapsScreenWithMarker(navController: NavController, latitude: Double, longitu
                     snippet = "위도: $latitude, 경도: $longitude"
                 )
             }
-        }
-    }
-}
 
-class MapsActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val latitude = intent.getDoubleExtra("PLACE_LAT", 0.0)
-        val longitude = intent.getDoubleExtra("PLACE_LNG", 0.0)
-        val placeName = intent.getStringExtra("PLACE_NAME") ?: "Unknown Place"
-
-        setContent {
-            MapsScreenWithMarker(
-                navController = rememberNavController(),
-                latitude = latitude,
-                longitude = longitude,
-                name = placeName
-            )
+            // 저장하기 버튼 추가
+            Button(
+                onClick = {
+                    diaryViewModel.updatePlaceInfo(id, name, latitude, longitude)
+                    diaryViewModel.resetPlaceFinder()
+                    navController.navigateUp()
+                    navController.navigateUp()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp,horizontal = 55.dp)
+            ) {
+                Text("저장하기")
+            }
         }
     }
 }

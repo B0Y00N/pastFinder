@@ -70,7 +70,10 @@ fun ReadDiaryPage(
                     // 지도 아이콘 버튼 추가
                     IconButton(onClick = {
                         // 위도와 경도 리스트
-                        val locationList = diaryViewModel.uiState.value.placeEntries.map { it.latitude to it.longitude }
+                        //val locationList = diaryViewModel.uiState.value.placeEntries.map { it.latitude to it.longitude }
+
+                        navController.navigate(route = "mapRoute")
+
                         /* 위 변수 활용해서 지도 페이지로 이동하는 네비게이션 액션 추가 */
                         /* 예시: navController.navigate("mapPage/@@@@")*/
                     }) {
@@ -122,7 +125,7 @@ fun PlaceCard(placeEntry: PlaceEntry) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${placeEntry.id}번째 장소",
+                    text = if (placeEntry.placeName.isNotBlank()) placeEntry.placeName else "${placeEntry.id}번째 장소",
                     fontSize = 24.sp,
                     textAlign = TextAlign.Left
                 )
