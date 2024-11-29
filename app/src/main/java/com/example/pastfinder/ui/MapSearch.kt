@@ -92,7 +92,11 @@ class MapSearchActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun PlaceFinderScreen(navController: NavController, diaryViewModel: DiaryViewModel, id: Int) {
+fun PlaceFinderScreen(
+    navController: NavController,
+    diaryViewModel: DiaryViewModel,
+    id: Int,
+) {
     val placeFinderState = diaryViewModel.placeFinderState
     val context = LocalContext.current
 
@@ -101,7 +105,10 @@ fun PlaceFinderScreen(navController: NavController, diaryViewModel: DiaryViewMod
             TopAppBar(
                 title = { Text("Place Finder") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = {
+                        diaryViewModel.deletePlaceEntry(id)
+                        navController.navigateUp()
+                    }) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }

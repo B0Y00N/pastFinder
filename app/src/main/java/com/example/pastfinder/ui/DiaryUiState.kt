@@ -15,8 +15,8 @@ data class PlaceEntry(
     val placeDescription: String = "",
     val placeName: String = "",
     val latitude: Double = -1.0,
-    val longitude: Double = -1.0
-    // val simpleReview: String = ""
+    val longitude: Double = -1.0,
+    val simpleReview: String = ""
     // 한줄평
 )
 

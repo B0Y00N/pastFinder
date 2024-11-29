@@ -76,11 +76,12 @@ fun MapsScreenWithRoute(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState
             ) {
-                // 각 위치에 마커 추가
-                locationList.forEach { location ->
+                // 각 위치에 마커 추가 및 한줄평 표시
+                diaryViewModel.uiState.value.placeEntries.forEach { placeEntry ->
+                    val location = LatLng(placeEntry.latitude, placeEntry.longitude)
                     Marker(
                         state = MarkerState(position = location),
-                        title = "테스트"
+                        title = placeEntry.simpleReview
                     )
                 }
 

@@ -170,6 +170,9 @@ fun WriteDiaryPage(
                 onDescriptionChange = {
                     diaryViewModel.updatePlaceDescription(diaryUiState.placeEntries[index].id, it)  // 장소 설명 업데이트
                 },
+                onAddSimpleReview = {
+                    diaryViewModel.updateSimpleReview(diaryUiState.placeEntries[index].id, it) // 장소 한줄평 업데이트
+                },
                 onDelete = {
                     diaryViewModel.deletePlaceEntry(diaryUiState.placeEntries[index].id)  // 장소 삭제
                 }
@@ -214,6 +217,7 @@ fun PlaceEntryCard(
     placeEntry: PlaceEntry,
     onAddImage: () -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onAddSimpleReview: (String) -> Unit,
     onDelete: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(true) }
@@ -295,6 +299,13 @@ fun PlaceEntryCard(
                     maxLines = 5
                 )
 
+                OutlinedTextField(
+                    value = placeEntry.simpleReview,
+                    onValueChange = { onAddSimpleReview(it) },
+                    label = { Text("장소 한줄평") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 5
+                )
             }
         }
     }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.libraries.places.api.model.kotlin.place
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -103,6 +104,16 @@ class DiaryViewModel : ViewModel() {
             currentState.copy(
                 placeEntries = currentState.placeEntries.map {
                     if (it.id == entryId) it.copy(placeDescription = description) else it
+                }
+            )
+        }
+    }
+
+    fun updateSimpleReview(entryId: Int, review: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                placeEntries = currentState.placeEntries.map {
+                    if (it.id == entryId) it.copy(simpleReview = review) else it
                 }
             )
         }
