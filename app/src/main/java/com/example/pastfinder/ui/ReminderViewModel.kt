@@ -41,7 +41,11 @@ class ReminderViewModel: ViewModel() {
         val updatedGoals = goalList.toMutableList().apply {
             removeAt(index)
         }
-        goalList = updatedGoals
+        if(updatedGoals.isEmpty()){
+            goalList = emptyList()
+        } else {
+            goalList = updatedGoals
+        }
     }
 
     // 목표 내용 update하는 함수

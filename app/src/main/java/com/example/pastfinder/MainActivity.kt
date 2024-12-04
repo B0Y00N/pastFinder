@@ -52,7 +52,8 @@ class MainActivity : ComponentActivity() {
                     composable(route = "mainScreen") {
                         MainScreen(
                             navController = navController,
-                            diaryViewModel = diaryViewModel
+                            diaryViewModel = diaryViewModel,
+                            reminderViewModel = reminderViewModel
                         )
                     }
                     composable(

@@ -1,6 +1,7 @@
 package com.example.pastfinder.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -48,18 +51,25 @@ fun ReadDiaryPage(
     month: String,
     day: String
 ) {
-
-    val date = "$year-$month-$day"
+    val date = if (day.length == 1) "$year-$month-0$day" else "$year-$month-$day"
     val diary = diaryViewModel.getDiary(date)
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         item {
             TopAppBar(
-                title = { Text("${year}년 ${month}월 ${day}의 기록") },
+                title = {
+                    Text(
+                        text = "${year}년 ${month}월 ${day}의 기록",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.navigateUp()
-                    }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "뒤로가기"
@@ -67,16 +77,15 @@ fun ReadDiaryPage(
                     }
                 },
                 actions = {
-                    // 지도 아이콘 버튼 추가
                     IconButton(onClick = {
-                        // 위도와 경도 리스트
+                        // 위도와 경도 리스트를 사용하여 지도 페이지로 이동
                         val locationList = diaryViewModel.uiState.value.placeEntries.map { it.latitude to it.longitude }
-                        /* 위 변수 활용해서 지도 페이지로 이동하는 네비게이션 액션 추가 */
-                        /* 예시: navController.navigate("mapPage/@@@@")*/
+                        /* 예: navController.navigate("mapPage/@@@@") */
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Place,
-                            contentDescription = "지도"
+                            contentDescription = "지도",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -84,22 +93,38 @@ fun ReadDiaryPage(
         }
 
         item {
-            // 일기 제목 입력 TextField (한글 입력 문제 해결 필요)
+            // 일기 제목
             Text(
-                text = diary.title
+                text = diary.title,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(vertical = 8.dp)
             )
         }
 
-        // Diary Entry Card
+        // 장소 정보 카드
         items(diary.placeEntries.size) { index ->
             PlaceCard(placeEntry = diary.placeEntries[index])
         }
 
         item {
-            // 일기 전체 내용 입력 TextField (총평)
-            Text(
-                text = diary.totalReview
-            )
+            // 총평 카드
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            ) {
+                Text(
+                    text = diary.totalReview,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 20.sp, // 글씨 크기 증가
+                        lineHeight = 28.sp // 읽기 편하게 행간 추가
+                    ),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(16.dp) // 카드 안쪽 여백 추가
+                )
+            }
         }
     }
 }
@@ -107,62 +132,92 @@ fun ReadDiaryPage(
 @Composable
 fun PlaceCard(placeEntry: PlaceEntry) {
     var isExpanded by remember { mutableStateOf(true) }
+    var imagesClicked by remember { mutableStateOf(false) }
 
     Card(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp, 16.dp, 10.dp, 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            .padding(vertical = 8.dp)
+            .clickable { isExpanded = !isExpanded },
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = "${placeEntry.id}번째 장소",
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Left
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                // 확장/축소 버튼
-                IconButton(onClick = { isExpanded = !isExpanded }) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "축소" else "확장"
-                    )
-                }
+
             }
 
-
-            // 확장된 카드 내용
             if (isExpanded) {
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // 이미지 표시
-                if (placeEntry.images.isNotEmpty()) {
-                    LazyColumn (modifier = Modifier.height(200.dp)) {
-                        items(placeEntry.images) { base64Image ->
-                            val bitmap = base64ToBitmap(base64Image)
-                            bitmap?.let {
-                                Image(
-                                    bitmap = it.asImageBitmap(),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(180.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                )
+
+                if(placeEntry.images.isNotEmpty()) {
+                    if(!imagesClicked) {
+                        LazyRow(modifier = Modifier.height(250.dp)) {
+                            items(placeEntry.images) { base64Image ->
+                                val bitmap = base64ToBitmap(base64Image)
+                                bitmap?.let {
+                                    Image(
+                                        bitmap = it.asImageBitmap(),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(240.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .clickable { imagesClicked = !imagesClicked }
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        val size = 400 * placeEntry.images.size
+                        LazyColumn(
+                            modifier = Modifier
+                                .height(size.dp)
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(placeEntry.images) { base64Image ->
+                                val bitmap = base64ToBitmap(base64Image)
+                                bitmap?.let {
+                                    Image(
+                                        bitmap = it.asImageBitmap(),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .size(it.width.dp, it.height.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .clickable { imagesClicked = !imagesClicked }
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
+                // 장소 설명
                 Text(
-                    text = placeEntry.placeDescription
+                    text = placeEntry.placeDescription,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

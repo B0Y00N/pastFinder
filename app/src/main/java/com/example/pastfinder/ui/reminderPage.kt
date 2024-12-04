@@ -58,6 +58,7 @@ fun ReminderPage(
     reminderViewModel: ReminderViewModel
 ) {
     var showAddGoalPopup by remember { mutableStateOf(false) } // 팝업 표시 여부 상태
+    val goalExist = if (reminderViewModel.goalList.isNotEmpty()) Arrangement.Top else Arrangement.Center
 
     // "목표 추가" 버튼 클릭 시 팝업 표시
     if (showAddGoalPopup) {
@@ -94,7 +95,9 @@ fun ReminderPage(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(innerPadding),
+                verticalArrangement = goalExist
+
             ) {
                 if (reminderViewModel.goalList.size == 0) {
                     items(1){
@@ -210,7 +213,8 @@ fun AddGoalPopup(
                 onClick = {
                     onSave(reminderUiState)
                     onDismiss() // 저장 후 팝업 닫기
-                }
+                },
+                enabled = reminderUiState.content.isNotEmpty()
             ) {
                 Text("저장")
             }
