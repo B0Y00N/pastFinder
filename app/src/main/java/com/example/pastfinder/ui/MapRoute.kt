@@ -1,9 +1,6 @@
 package com.example.pastfinder.ui
 
 import android.annotation.SuppressLint
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -81,7 +79,8 @@ fun MapsScreenWithRoute(
                     val location = LatLng(placeEntry.latitude, placeEntry.longitude)
                     Marker(
                         state = MarkerState(position = location),
-                        title = placeEntry.simpleReview
+                        title = "${placeEntry.id}. ${placeEntry.placeName}",
+                        snippet = placeEntry.simpleReview
                     )
                 }
 
@@ -90,7 +89,9 @@ fun MapsScreenWithRoute(
                     Polyline(
                         points = locationList,
                         color = Color.Blue,
-                        width = 15f
+                        width = 15f,
+                        startCap = RoundCap(),
+                        endCap = RoundCap()
                     )
                 }
             }
