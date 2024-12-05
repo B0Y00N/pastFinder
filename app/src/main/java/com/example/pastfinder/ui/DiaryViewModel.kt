@@ -1,13 +1,17 @@
 package com.example.pastfinder.ui
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.android.libraries.places.api.model.kotlin.place
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class DiaryViewModel : ViewModel() {
 
@@ -15,6 +19,9 @@ class DiaryViewModel : ViewModel() {
     // 선택된 날짜의 Diary state
     private var _uiState = MutableStateFlow(DiaryUiState())
     var uiState: StateFlow<DiaryUiState> = _uiState.asStateFlow()
+
+    var placeFinderState by mutableStateOf(PlaceFinderEntry())
+        private set
 
     // 날짜를 인자로 받아 Diary state를 업데이트하는 함수
     fun createDiary(date: String) {
@@ -102,6 +109,16 @@ class DiaryViewModel : ViewModel() {
         }
     }
 
+    fun updateSimpleReview(entryId: Int, review: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                placeEntries = currentState.placeEntries.map {
+                    if (it.id == entryId) it.copy(simpleReview = review) else it
+                }
+            )
+        }
+    }
+
     // 장소 항목을 삭제하는 함수
     fun deletePlaceEntry(entryId: Int) {
         _uiState.update { currentState ->
@@ -122,6 +139,26 @@ class DiaryViewModel : ViewModel() {
             )
         }
         //entryId update 해야함
+    }
+
+    // 지도 검색 화면에 해당하는 부분
+    fun updatePlaceFinder(newQuery: String) {
+        placeFinderState = placeFinderState.copy(query = newQuery)
+    }
+
+    fun searchingPlaces(context: Context) {
+        if (placeFinderState.query.isNotBlank()){
+            placeFinderState = placeFinderState.copy(loading = true)
+            viewModelScope.launch {
+                searchPlaces(context, placeFinderState.query) { result ->
+                    placeFinderState = placeFinderState.copy(places = result, loading = false)
+                }
+            }
+        }
+    }
+
+    fun resetPlaceFinder() {
+        placeFinderState = PlaceFinderEntry()
     }
 
     // 날짜에 해당하는 Diary 있는지 확인하는 함수

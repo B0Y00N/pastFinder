@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.android.libraries.places.api.model.kotlin.place
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
@@ -104,7 +105,12 @@ fun WriteDiaryPage(
                     // 지도 아이콘 버튼 추가
                     IconButton(onClick = {
                         // 위도와 경도 리스트
-                        val locationList = diaryUiState.placeEntries.map { it.latitude to it.longitude }
+                        //val locationList = diaryUiState.placeEntries.map { it.latitude to it.longitude }
+
+                        navController.navigate(route = "mapRoute")
+
+                        //diaryViewModel.resetPlaceFinder()
+                        //navController.navigate("mapSearch")
                         /* 위 변수 활용해서 지도 페이지로 이동하는 네비게이션 액션 추가 */
                         /* 예시: navController.navigate("mapPage/@@@@")*/
                     }) {
@@ -142,6 +148,8 @@ fun WriteDiaryPage(
                     // 새로운 DiaryEntry를 리스트에 추가
                     val newEntry = PlaceEntry(id = diaryUiState.placeEntries.size + 1)
                     diaryViewModel.addPlaceEntry(newEntry)  // 새로운 장소 추가
+                    diaryViewModel.resetPlaceFinder()
+                    navController.navigate(route = "mapSearch/$selectedID")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -161,6 +169,9 @@ fun WriteDiaryPage(
                 },
                 onDescriptionChange = {
                     diaryViewModel.updatePlaceDescription(diaryUiState.placeEntries[index].id, it)  // 장소 설명 업데이트
+                },
+                onAddSimpleReview = {
+                    diaryViewModel.updateSimpleReview(diaryUiState.placeEntries[index].id, it) // 장소 한줄평 업데이트
                 },
                 onDelete = {
                     diaryViewModel.deletePlaceEntry(diaryUiState.placeEntries[index].id)  // 장소 삭제
@@ -207,6 +218,7 @@ fun PlaceEntryCard(
     placeEntry: PlaceEntry,
     onAddImage: () -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onAddSimpleReview: (String) -> Unit,
     onDelete: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(true) }
@@ -231,12 +243,13 @@ fun PlaceEntryCard(
                         contentDescription = "Delete"
                     )
                 }
-
                 Text(
-                    text = "${placeEntry.id}번째 장소",
+                    text = if (placeEntry.placeName.isNotBlank()) placeEntry.placeName else "${placeEntry.id}번째 장소",
                     fontSize = 24.sp,
                     textAlign = TextAlign.Left
                 )
+
+
 
                 // 확장/축소 버튼
                 IconButton(onClick = { isExpanded = !isExpanded }) {
@@ -287,6 +300,13 @@ fun PlaceEntryCard(
                     maxLines = 5
                 )
 
+                OutlinedTextField(
+                    value = placeEntry.simpleReview,
+                    onValueChange = { onAddSimpleReview(it) },
+                    label = { Text("장소 한줄평") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 5
+                )
             }
         }
     }
