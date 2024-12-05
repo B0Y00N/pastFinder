@@ -28,6 +28,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,5 +106,35 @@ fun RegisterPage(
 }
 
 fun registerUser(email: String, password: String) {
-    /* 추후 구현 */
+    val url = ""        //이후에 추가
+    val client = OkHttpClient()
+
+    val jsonString = """    
+        {
+            "name": "$email"
+            "password": "$password"
+        }
+    """.trimIndent()    //추후 수정 봐야함
+
+    val mediaType = "application/json; charset=utf-8".toMediaType() // 이게 뭘까?
+    val body = jsonString.toRequestBody(mediaType)
+
+    val request = Request.Builder()
+        .url(url)
+        .post(body)
+        .build()
+
+    client.newCall(request).enqueue(object : okhttp3.Callback {
+        override fun onFailure(call: okhttp3.Call, e: IOException) {
+            println("전송 실패: ${e.message}")
+        }
+
+        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+            if (response.isSuccessful) {
+                println("전송 성공: ${response.body?.string()}")
+            } else {
+                println("서버 응답 실패: ${response.code}")
+            }
+        }
+    })
 }

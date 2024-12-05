@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+
+    kotlin("plugin.serialization") version "1.5.0"
 }
 
 android {
@@ -87,4 +89,10 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
 
     implementation("com.google.android.libraries.places:places:3.0.0")
+
+    //Serialization
+    implementation(libs.kotlinx.serialization.json)
+    // OkHttp (HTTP 요청 전송)
+    implementation(libs.okhttp)
+
 }

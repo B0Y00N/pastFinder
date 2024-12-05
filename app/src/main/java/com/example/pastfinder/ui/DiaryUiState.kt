@@ -2,6 +2,9 @@ package com.example.pastfinder.ui
 
 import com.google.android.libraries.places.api.model.Place
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class DiaryUiState(
     var date: String = "",
     var title: String = "",
@@ -9,6 +12,7 @@ data class DiaryUiState(
     var placeEntries: List<PlaceEntry> = emptyList()
 )
 
+@Serializable
 data class PlaceEntry(
     val id: Int,
     val images: List<String> = emptyList(),
