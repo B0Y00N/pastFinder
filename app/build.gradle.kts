@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+
+    kotlin("plugin.serialization") version "1.5.0"
 }
 
 android {
@@ -71,4 +73,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     //navigation
     implementation(libs.androidx.navigation.compose)
+
+    //Serialization
+    implementation(libs.kotlinx.serialization.json)
+    // OkHttp (HTTP 요청 전송)
+    implementation(libs.okhttp)
+
 }
