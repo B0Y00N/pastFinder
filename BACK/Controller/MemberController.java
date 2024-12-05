@@ -21,7 +21,7 @@ public class MemberController {
 
     @PostMapping("/register")
     @ResponseBody
-    public int register(@RequestBody Member member){
+    public long register(@RequestBody Member member){
        return memberService.register(member.getName(),member.getPassword());
     }
 }
