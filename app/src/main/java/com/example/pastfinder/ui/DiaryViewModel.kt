@@ -6,15 +6,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pastfinder.api.ApiClient
 import com.google.android.libraries.places.api.model.kotlin.place
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.IOException
 
-class DiaryViewModel : ViewModel() {
+class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
+    private var diaryList by mutableStateOf<List<DiaryResponse>>(emptyList())
     private var diarySet by mutableStateOf<Set<DiaryUiState>>(emptySet())
     // 선택된 날짜의 Diary state
     private var _uiState = MutableStateFlow(DiaryUiState())
@@ -22,6 +32,19 @@ class DiaryViewModel : ViewModel() {
 
     var placeFinderState by mutableStateOf(PlaceFinderEntry())
         private set
+
+    fun fetchDiaries() {
+        apiClient.getElements("/diary/list") { success, response ->
+            if (success) {
+                val gson = Gson()
+                val diaryResponseList: List<DiaryResponse> =
+                    gson.fromJson(response, Array<DiaryResponse>::class.java).toList()
+                diaryList = diaryResponseList
+            } else {
+
+            }
+        }
+    }
 
     // 날짜를 인자로 받아 Diary state를 업데이트하는 함수
     fun createDiary(date: String) {
@@ -166,6 +189,20 @@ class DiaryViewModel : ViewModel() {
 
     // DB에 저장하는 함수 꼭!! 추가해야함
     fun saveDiary() {
+        viewModelScope.launch {
+            try {
+                val jsonBody = mapDiaryUiStateToContents(_uiState.value)
+                apiClient.postElement("/diary/write", jsonBody) { success, response ->
+                    if (success) {
+
+                    } else {
+
+                    }
+                }
+            } catch (e: Exception) {
+
+            }
+        }
         diarySet = diarySet.plus(_uiState.value)
     }
 
@@ -176,7 +213,70 @@ class DiaryViewModel : ViewModel() {
 
     // 일기 삭제
     fun deleteDiary(date: String) {
+        val idToRemove = diaryList.find { it.date == date }
+        val jsonBody = """{
+            "id": ${idToRemove?.id}
+            }""".trimMargin()
+        if (idToRemove != null) {
+            // endpoint 수정해야함
+            apiClient.delete("/diary", jsonBody) { success, response->
+                if (success) {
+
+                } else {
+
+                }
+            }
+        }
+        fetchDiaries()
         val diaryToRemove = diarySet.find { it.date == date }
         diarySet = diarySet.minus(diaryToRemove!!)
     }
+}
+
+fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
+// Contents 객체 생성
+
+    var locations = ""
+
+    for (location in diaryUiState.placeEntries) {
+        var images = ""
+        for(image in location.images) {
+            images += """
+                "$image",
+            """.trimIndent()
+        }
+
+        if (images.length >= 2) {
+            images = images.dropLast(1) // 마지막 두 글자 제거
+        }
+
+        locations += """
+        {
+        "locationKey": {
+            "seq": ${location.id}
+        },
+        "name": "${location.placeName}",
+        "x": ${location.longitude},
+        "y": ${location.latitude},
+        "images": [$images],
+        "placeDescription": "${location.placeDescription}",
+        "simpleReview": "${location.simpleReview}"
+        },
+    """.trimIndent()
+    }
+
+    if (locations.length >= 2) {
+        locations = locations.dropLast(1)
+    }
+
+    val contents = """
+        {
+        "title": "${diaryUiState.title}",
+        "review": "${diaryUiState.totalReview}",
+        "date": "${diaryUiState.date},
+        "map": [$locations]
+        }
+    """.trimIndent()
+
+    return contents
 }

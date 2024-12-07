@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -30,18 +32,41 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.pastfinder.api.ApiClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginPage(
     navController: NavController,
-    goToRegisterPage: () -> Unit
+    goToRegisterPage: () -> Unit,
+    viewModel: LoginViewModel
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
+    val loginStatus by viewModel.loginStatus
+
     val context = LocalContext.current
+
+    LaunchedEffect(key1 = loginStatus) {
+        when (loginStatus) {
+            is LoginStatus.Success -> {
+                Toast.makeText(context, (loginStatus as LoginStatus.Success).message, Toast.LENGTH_SHORT).show()
+                // 일기랑 리마인더 리스트 받아오기 추가할 것
+                navController.navigate(route = "mainScreen") {
+                    popUpTo(route = "loginPage") { inclusive = true }
+                }
+            }
+            is LoginStatus.Error -> {
+                Toast.makeText(context, (loginStatus as LoginStatus.Error).message, Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                // 초기 상태
+            }
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -89,27 +114,22 @@ fun LoginPage(
             Button(
                 modifier = Modifier.align(Alignment.End),
                 onClick = {
-                    /*
-                    if(loginUser(email, password) == -1) {
-                        Toast.makeText(context, "Login Failed", Toast.LENGTH_SHORT).show()
-                    } else {
-                        navController.navigate(route = "mainScreen")
-                    }
-                    */
+                    viewModel.loginUser(email, password)
 
-                    navController.navigate(route = "mainScreen")
                 }
             ) {
                 Text( text = "Login")
             }
+            when (loginStatus) {
+                is LoginStatus.Loading -> {
+                    CircularProgressIndicator()
+                }
+                else -> {
+                    // 초기 상태
+                }
+            }
 
         }
     }
-}
-
-fun loginUser(email: String, password: String): Any {
-
-    return -1
-    /* 추후 구현 */
 }
 

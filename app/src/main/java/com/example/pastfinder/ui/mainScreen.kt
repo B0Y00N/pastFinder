@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -56,6 +57,12 @@ fun MainScreen(
     diaryViewModel: DiaryViewModel = viewModel(),
     reminderViewModel: ReminderViewModel = viewModel()
 ) {
+    // MainScreen이 처음 로드되었을 때 데이터를 가져오도록 호출
+    LaunchedEffect(Unit) {
+        diaryViewModel.fetchDiaries()  // 일기 데이터 가져오기
+        reminderViewModel.fetchReminders()  // 리마인더 데이터 가져오기
+    }
+
     val formatter = SimpleDateFormat("yyyy-MM-dd", Locale("ko", "KR"))
     val date = Date()
 
@@ -95,7 +102,6 @@ fun MainScreen(
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add remind")
             }
         }
-        //bottom에 리마인더들 표시해야함
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -271,7 +277,9 @@ fun MainScreen(
             onDelete = {
                 isLogoutClicked = false
                 isLoggedIn = false
-                logout()
+                navController.navigate("loginPage") {
+                    popUpTo("mainScreen") { inclusive = true }
+                }
             }
         )
     }
@@ -392,9 +400,4 @@ fun LogoutPopUp(
             Text(text = "로그아웃하시겠어요?")
         }
     )
-}
-
-
-fun logout() {
-    /* 추후 구현 */
 }

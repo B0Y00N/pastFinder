@@ -21,7 +21,6 @@ data class PlaceEntry(
     val latitude: Double = -1.0,
     val longitude: Double = -1.0,
     val simpleReview: String = ""
-    // 한줄평
 )
 
 // 지도 검색 기록을 저장하는 엔트리

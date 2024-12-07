@@ -16,16 +16,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.pastfinder.api.ApiClient
 import com.example.pastfinder.ui.DiaryViewModel
+import com.example.pastfinder.ui.DiaryViewModelFactory
 import com.example.pastfinder.ui.LoginPage
+import com.example.pastfinder.ui.LoginViewModel
+import com.example.pastfinder.ui.LoginViewModelFactory
 import com.example.pastfinder.ui.MainScreen
 import com.example.pastfinder.ui.MapsScreenWithRoute
 import com.example.pastfinder.ui.MapsScreenWithMarker
 import com.example.pastfinder.ui.PlaceFinderScreen
 import com.example.pastfinder.ui.ReadDiaryPage
 import com.example.pastfinder.ui.RegisterPage
+import com.example.pastfinder.ui.RegisterViewModel
+import com.example.pastfinder.ui.RegisterViewModelFactory
 import com.example.pastfinder.ui.ReminderPage
 import com.example.pastfinder.ui.ReminderViewModel
+import com.example.pastfinder.ui.ReminderViewModelFactory
 import com.example.pastfinder.ui.WriteDiaryPage
 import com.example.pastfinder.ui.theme.PastFinderTheme
 import com.google.android.gms.maps.model.LatLng
@@ -38,10 +45,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PastFinderTheme {
+                val apiClient = ApiClient("http://35.212.210.224:8080")
 
-
-                val diaryViewModel = viewModel<DiaryViewModel>()
-                val reminderViewModel = viewModel<ReminderViewModel>()
+                val diaryViewModel = viewModel<DiaryViewModel>(factory = DiaryViewModelFactory(apiClient))
+                val reminderViewModel = viewModel<ReminderViewModel>(factory = ReminderViewModelFactory(apiClient))
 
                 val navController = rememberNavController()
 
@@ -50,15 +57,22 @@ class MainActivity : ComponentActivity() {
                     startDestination = "loginPage"
                 ) {
                     composable(route = "loginPage") {
-                        LoginPage(navController = navController) {
-                            navController.navigate("registerPage")
-                        }
+                        val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(apiClient))
+                        LoginPage(
+                            navController = navController,
+                            viewModel = viewModel,
+                            goToRegisterPage = {
+                                navController.navigate("registerPage")
+                            }
+                        )
                     }
                     composable(route = "registerPage"){
+                        val viewModel: RegisterViewModel = viewModel(factory = RegisterViewModelFactory(apiClient))
                         RegisterPage(
                             backToLoginPage = {
                                 navController.navigateUp()
-                            }
+                            },
+                            viewModel = viewModel
                         )
                     }
                     composable(route = "mainScreen") {

@@ -95,4 +95,7 @@ dependencies {
     // OkHttp (HTTP 요청 전송)
     implementation(libs.okhttp)
 
+    implementation (libs.gson)
+
+
 }

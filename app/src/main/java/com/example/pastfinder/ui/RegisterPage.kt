@@ -1,5 +1,6 @@
 package com.example.pastfinder.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,9 +27,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pastfinder.api.ApiClient
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -40,10 +46,14 @@ import okio.IOException
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterPage(
-    backToLoginPage: () -> Unit
+    backToLoginPage: () -> Unit,
+    viewModel: RegisterViewModel
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+
+    val registrationStatus by viewModel.registrationStatus
+    val context = LocalContext.current
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -97,44 +107,23 @@ fun RegisterPage(
             }
             Button(
                 modifier = Modifier.align(Alignment.End),
-                onClick = { registerUser(email, password) }
+                onClick = { viewModel.registerUser(email, password) }
             ) {
                 Text( text = "Register")
             }
-        }
-    }
-}
 
-fun registerUser(email: String, password: String) {
-    val url = ""        //이후에 추가
-    val client = OkHttpClient()
-
-    val jsonString = """    
-        {
-            "name": "$email"
-            "password": "$password"
-        }
-    """.trimIndent()    //추후 수정 봐야함
-
-    val mediaType = "application/json; charset=utf-8".toMediaType() // 이게 뭘까?
-    val body = jsonString.toRequestBody(mediaType)
-
-    val request = Request.Builder()
-        .url(url)
-        .post(body)
-        .build()
-
-    client.newCall(request).enqueue(object : okhttp3.Callback {
-        override fun onFailure(call: okhttp3.Call, e: IOException) {
-            println("전송 실패: ${e.message}")
-        }
-
-        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-            if (response.isSuccessful) {
-                println("전송 성공: ${response.body?.string()}")
-            } else {
-                println("서버 응답 실패: ${response.code}")
+            when (registrationStatus) {
+                is RegistrationStatus.Loading -> {
+                    CircularProgressIndicator()
+                }
+                is RegistrationStatus.Success -> {
+                    Toast.makeText(context, (registrationStatus as RegistrationStatus.Success).message, Toast.LENGTH_SHORT).show()
+                }
+                is RegistrationStatus.Error -> {
+                    Toast.makeText(context, (registrationStatus as RegistrationStatus.Error).message, Toast.LENGTH_SHORT).show()
+                }
+                else -> { }
             }
         }
-    })
+    }
 }
