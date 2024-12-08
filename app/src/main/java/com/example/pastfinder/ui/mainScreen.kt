@@ -58,7 +58,7 @@ fun MainScreen(
     reminderViewModel: ReminderViewModel = viewModel()
 ) {
     // MainScreen이 처음 로드되었을 때 데이터를 가져오도록 호출
-    LaunchedEffect(Unit) {
+    LaunchedEffect(true) {
         diaryViewModel.fetchDiaries()  // 일기 데이터 가져오기
         reminderViewModel.fetchReminders()  // 리마인더 데이터 가져오기
     }

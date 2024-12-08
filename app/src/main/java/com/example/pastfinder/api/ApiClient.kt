@@ -4,6 +4,7 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.IOException
+import java.util.Date
 
 class ApiClient(private val baseUrl: String) {
     private val client = OkHttpClient()
@@ -37,7 +38,7 @@ class ApiClient(private val baseUrl: String) {
                             callback(false, "잘못된 아이디 혹은 비밀번호입니다!")
                         }
                     }
-
+                    callback(true, "성공!")
                 } else {
                     callback(false, "Error: ${response.body}")
                 }
@@ -46,8 +47,8 @@ class ApiClient(private val baseUrl: String) {
     }
 
     // 일기와 리마인더를 추가하는 postElement 함수
-    fun postElement(endpoint: String, jsonBody: String, callback: (Boolean, String) -> Unit) {
-        val url = "$baseUrl$endpoint/${userId}"
+    fun postElement(endpoint: String, jsonBody: String, callback: (Boolean, String) -> Unit, date: String = "") {
+        val url = if (date.isNotEmpty()) "$baseUrl$endpoint/${userId}/${date}" else "$baseUrl$endpoint/${userId}"
         val mediaType = "application/json".toMediaType()
         val body = jsonBody.toRequestBody(mediaType)
 
@@ -72,8 +73,8 @@ class ApiClient(private val baseUrl: String) {
     }
 
     // 일기와 리마인더 리스트 가져옴
-    fun getElements(endpoint: String, callback: (Boolean, String) -> Unit) {
-        val url = "$baseUrl$endpoint/${userId}"
+    fun getElements(endpoint: String, date: String = "", callback: (Boolean, String) -> Unit) {
+        val url = if (date.isEmpty()) "$baseUrl$endpoint/${userId}" else "$baseUrl$endpoint/${userId}/$date"
 
         val request = Request.Builder()
             .url(url)
@@ -95,14 +96,18 @@ class ApiClient(private val baseUrl: String) {
         })
     }
 
-    fun delete(endpoint: String, jsonBody: String?, callback: (Boolean, String) -> Unit) {
-        val url = "$baseUrl$endpoint"
+    fun delete(endpoint: String, jsonBody: String? = "", callback: (Boolean, String) -> Unit, date: String = "") {
+        val url = if (date.isEmpty()) "$baseUrl$endpoint" else "$baseUrl$endpoint/$userId/$date"
         val mediaType = "application/json; charset=utf-8".toMediaType()
-        val body = jsonBody?.toRequestBody(mediaType)
+
+
+        val body = if (jsonBody?.isNotEmpty() == true) jsonBody.toRequestBody(mediaType) else null
+
 
         val requestBuilder = Request.Builder()
             .url(url)
             .delete(body)
+
 
         val request = requestBuilder.build()
 

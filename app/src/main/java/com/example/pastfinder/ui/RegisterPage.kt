@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -54,6 +55,18 @@ fun RegisterPage(
 
     val registrationStatus by viewModel.registrationStatus
     val context = LocalContext.current
+
+    LaunchedEffect(key1 = registrationStatus) {
+        when (registrationStatus) {
+            is RegistrationStatus.Success -> {
+                Toast.makeText(context, (registrationStatus as RegistrationStatus.Success).message, Toast.LENGTH_SHORT).show()
+            }
+            is RegistrationStatus.Error -> {
+                Toast.makeText(context, (registrationStatus as RegistrationStatus.Error).message, Toast.LENGTH_SHORT).show()
+            }
+            else -> { }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -115,12 +128,6 @@ fun RegisterPage(
             when (registrationStatus) {
                 is RegistrationStatus.Loading -> {
                     CircularProgressIndicator()
-                }
-                is RegistrationStatus.Success -> {
-                    Toast.makeText(context, (registrationStatus as RegistrationStatus.Success).message, Toast.LENGTH_SHORT).show()
-                }
-                is RegistrationStatus.Error -> {
-                    Toast.makeText(context, (registrationStatus as RegistrationStatus.Error).message, Toast.LENGTH_SHORT).show()
                 }
                 else -> { }
             }

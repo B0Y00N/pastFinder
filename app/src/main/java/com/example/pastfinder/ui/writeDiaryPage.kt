@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,6 +56,7 @@ import androidx.navigation.NavController
 import com.google.android.libraries.places.api.model.kotlin.place
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.util.Base64
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -315,7 +315,7 @@ fun PlaceEntryCard(
 
 fun base64ToBitmap(base64String: String): Bitmap? {
     try {
-        val decodedString = Base64.decode(base64String, Base64.DEFAULT)
+        val decodedString = Base64.getDecoder().decode(base64String)
         return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
     } catch (e: Exception) {
         e.printStackTrace()
@@ -335,7 +335,7 @@ fun uriToBase64(context: Context, uri: Uri): String? {
         val byteArray = byteArrayOutputStream.toByteArray()
 
         // Base64로 인코딩
-        return Base64.encodeToString(byteArray, Base64.DEFAULT)
+        return Base64.getEncoder().encodeToString(byteArray)
     } catch (e: Exception) {
         e.printStackTrace()
         return null

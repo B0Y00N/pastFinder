@@ -24,7 +24,7 @@ import okio.IOException
 
 class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
-    private var diaryList by mutableStateOf<List<DiaryResponse>>(emptyList())
+    private var diaryList by mutableStateOf<List<String>>(emptyList())
     private var diarySet by mutableStateOf<Set<DiaryUiState>>(emptySet())
     // 선택된 날짜의 Diary state
     private var _uiState = MutableStateFlow(DiaryUiState())
@@ -37,8 +37,8 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
         apiClient.getElements("/diary/list") { success, response ->
             if (success) {
                 val gson = Gson()
-                val diaryResponseList: List<DiaryResponse> =
-                    gson.fromJson(response, Array<DiaryResponse>::class.java).toList()
+                val diaryResponseList: List<String> =
+                    gson.fromJson(response, Array<String>::class.java).toList()
                 diaryList = diaryResponseList
             } else {
 
@@ -185,20 +185,25 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
     }
 
     // 날짜에 해당하는 Diary 있는지 확인하는 함수
-    fun isDiaryWritten(date: String): Boolean = diarySet.any { it.date == date }
+    fun isDiaryWritten(date: String): Boolean = diaryList.any { it == date }
 
     // DB에 저장하는 함수 꼭!! 추가해야함
     fun saveDiary() {
         viewModelScope.launch {
             try {
                 val jsonBody = mapDiaryUiStateToContents(_uiState.value)
-                apiClient.postElement("/diary/write", jsonBody) { success, response ->
-                    if (success) {
+                apiClient.postElement(
+                    endpoint = "/diary/write",
+                    jsonBody = jsonBody,
+                    date = _uiState.value.date,
+                    callback = {
+                            success, response ->
+                        if (success) {
 
-                    } else {
+                        } else {
 
-                    }
-                }
+                        }
+                    })
             } catch (e: Exception) {
 
             }
@@ -208,27 +213,67 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
     // 일기 읽을 때
     fun getDiary(date: String): DiaryUiState {
-        return diarySet.find { it.date == date }!!
+        val diary: DiaryUiState = DiaryUiState()
+        val places: List<PlaceEntry> = emptyList()
+        apiClient.getElements(
+            endpoint = "/diary/read",
+            date = date
+        ) { success, response ->
+            if (success) {
+                val gson = Gson()
+                val diaryResponseList: List<DiaryResponse> =
+                    gson.fromJson(response, Array<DiaryResponse>::class.java).toList()
+
+                for ((index, item) in diaryResponseList[0].map.withIndex()) {
+                    var images = emptyList<String>()
+                    if (item.images.isNotEmpty()) {
+
+                    }
+                    val place = PlaceEntry(index)
+                    place.copy(
+                        placeName = item.name,
+                        placeDescription = item.placeDescription,
+                        simpleReview = item.simpleReview,
+                        latitude = item.x,
+                        longitude = item.y,
+                        images = images
+                    )
+                    places.plus(place)
+                }
+                diary.copy(
+                    date = date,
+                    title = diaryResponseList[0].title,
+                    totalReview = diaryResponseList[0].review,
+                    placeEntries = places
+                )
+
+
+            } else {
+
+            }
+        }
+        return diary
     }
 
     // 일기 삭제
     fun deleteDiary(date: String) {
-        val idToRemove = diaryList.find { it.date == date }
-        val jsonBody = """{
-            "id": ${idToRemove?.id}
-            }""".trimMargin()
+        val diaryToRemove = diarySet.find { it.date == date }
+        val idToRemove = diaryList.find { it == date }
         if (idToRemove != null) {
             // endpoint 수정해야함
-            apiClient.delete("/diary", jsonBody) { success, response->
-                if (success) {
+            apiClient.delete(
+                endpoint = "/diary/delete",
+                date = diaryToRemove!!.date,
+                callback = { success, response->
+                    if (success) {
 
-                } else {
+                    } else {
 
-                }
-            }
+                    }
+                })
         }
         fetchDiaries()
-        val diaryToRemove = diarySet.find { it.date == date }
+
         diarySet = diarySet.minus(diaryToRemove!!)
     }
 }
@@ -242,12 +287,8 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
         var images = ""
         for(image in location.images) {
             images += """
-                "$image",
+                $image /parsing/
             """.trimIndent()
-        }
-
-        if (images.length >= 2) {
-            images = images.dropLast(1) // 마지막 두 글자 제거
         }
 
         locations += """
@@ -256,9 +297,9 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
             "seq": ${location.id}
         },
         "name": "${location.placeName}",
-        "x": ${location.longitude},
-        "y": ${location.latitude},
-        "images": [$images],
+        "x": ${location.latitude},
+        "y": ${location.longitude},
+        "images": "$images",
         "placeDescription": "${location.placeDescription}",
         "simpleReview": "${location.simpleReview}"
         },
@@ -273,7 +314,7 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
         {
         "title": "${diaryUiState.title}",
         "review": "${diaryUiState.totalReview}",
-        "date": "${diaryUiState.date},
+        "date": "${diaryUiState.date}",
         "map": [$locations]
         }
     """.trimIndent()

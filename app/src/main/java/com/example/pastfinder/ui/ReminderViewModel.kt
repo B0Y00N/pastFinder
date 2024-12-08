@@ -37,9 +37,9 @@ class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
         apiClient.getElements("/reminder/get") { success, response ->
             if (success) {
                 val gson = Gson()
-                val reminderIdList: List<Long> =
-                    gson.fromJson(response, Array<Long>::class.java).toList()
-                goalIdList = reminderIdList
+                val reminderIdList: List<Goal> =
+                    gson.fromJson(response, Array<Goal>::class.java).toList()
+                goalList = reminderIdList
             } else {
 
             }
@@ -68,13 +68,17 @@ class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
                     "contents": "${goal.content}"
                     }
                 """.trimIndent()
-                apiClient.postElement("/reminder/write", jsonBody) { success, response ->
-                    if (success) {
+                apiClient.postElement(
+                    endpoint = "/reminder/write",
+                    jsonBody = jsonBody,
+                    callback = { success, response ->
+                        if (success) {
 
-                    } else {
+                        } else {
 
+                        }
                     }
-                }
+                )
             } catch (e: Exception) {
 
             }
@@ -91,13 +95,17 @@ class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
                 }
             """.trimIndent()
             try {
-                apiClient.delete("/reminder/delete", jsonBody) { success, response ->
-                    if (success) {
+                apiClient.delete(
+                    endpoint = "/reminder/delete",
+                    jsonBody = jsonBody,
+                    callback = { success, response ->
+                        if (success) {
 
-                    } else {
+                        } else {
 
+                        }
                     }
-                }
+                )
             } catch (e: Exception) {
 
             }
