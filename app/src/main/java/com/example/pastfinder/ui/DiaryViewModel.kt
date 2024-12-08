@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -21,6 +22,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.IOException
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
@@ -212,47 +215,60 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
     }
 
     // 일기 읽을 때
-    fun getDiary(date: String): DiaryUiState {
-        val diary: DiaryUiState = DiaryUiState()
-        val places: List<PlaceEntry> = emptyList()
-        apiClient.getElements(
-            endpoint = "/diary/read",
-            date = date
-        ) { success, response ->
-            if (success) {
-                val gson = Gson()
-                val diaryResponseList: List<DiaryResponse> =
-                    gson.fromJson(response, Array<DiaryResponse>::class.java).toList()
+    suspend fun getDiary(date: String): DiaryUiState {
+        return suspendCancellableCoroutine { continuation ->
+            apiClient.getElements(
+                endpoint = "/diary/read",
+                date = date
+            ) { success, response ->
+                if (success) {
+                    try {
+                        val gson = Gson()
+                        val diaryResponse: DiaryResponse =
+                            gson.fromJson(response, DiaryResponse::class.java)
 
-                for ((index, item) in diaryResponseList[0].map.withIndex()) {
-                    var images = emptyList<String>()
-                    if (item.images.isNotEmpty()) {
+                        // PlaceEntry 리스트 생성
+                        val places = diaryResponse.map.mapIndexed { index, item ->
+                            val images = if (item.images.isNotEmpty()) {
+                                item.images.split(",") // 이미지가 쉼표로 구분된 문자열이라고 가정
+                            } else {
+                                emptyList()
+                            }
+                            PlaceEntry(
+                                id = index,
+                                placeName = item.name,
+                                placeDescription = item.placeDescription,
+                                simpleReview = item.simpleReview,
+                                latitude = item.x,
+                                longitude = item.y,
+                                images = images
+                            )
+                        }
 
+                        // DiaryUiState 생성
+                        val diary = DiaryUiState(
+                            date = date,
+                            title = diaryResponse.title,
+                            totalReview = diaryResponse.review,
+                            placeEntries = places
+                        )
+
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                placeEntries = diary.placeEntries
+                            )
+                        }
+
+                        // 결과 반환
+                        continuation.resume(diary)
+                    } catch (e: Exception) {
+                        continuation.resumeWithException(e)
                     }
-                    val place = PlaceEntry(index)
-                    place.copy(
-                        placeName = item.name,
-                        placeDescription = item.placeDescription,
-                        simpleReview = item.simpleReview,
-                        latitude = item.x,
-                        longitude = item.y,
-                        images = images
-                    )
-                    places.plus(place)
+                } else {
+                    continuation.resumeWithException(Exception("Failed to fetch diary"))
                 }
-                diary.copy(
-                    date = date,
-                    title = diaryResponseList[0].title,
-                    totalReview = diaryResponseList[0].review,
-                    placeEntries = places
-                )
-
-
-            } else {
-
             }
         }
-        return diary
     }
 
     // 일기 삭제

@@ -1,5 +1,6 @@
 package com.example.pastfinder.ui
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +55,22 @@ fun ReadDiaryPage(
     day: String
 ) {
     val date = if (day.length == 1) "$year-$month-0$day" else "$year-$month-$day"
-    val diary = diaryViewModel.getDiary(date)
+    // DiaryUiState를 위한 상태 저장
+    var diary by remember { mutableStateOf<DiaryUiState?>(null) }
+
+    // LaunchedEffect를 사용해 suspend 함수 호출
+    LaunchedEffect(date) {
+        try {
+            diary = diaryViewModel.getDiary(date)
+        } catch (e: Exception) {
+            Log.e("ReadDiaryPage", "Failed to fetch diary: ${e.message}")
+        }    }
+
+    // Diary를 읽는 동안 로딩 표시
+    if (diary == null) {
+        // 로딩 상태 표시
+        CircularProgressIndicator()
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -98,16 +116,20 @@ fun ReadDiaryPage(
 
         item {
             // 일기 제목
-            Text(
-                text = diary.title,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+            diary?.let {
+                Text(
+                    text = it.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
         }
 
         // 장소 정보 카드
-        items(diary.placeEntries.size) { index ->
-            PlaceCard(placeEntry = diary.placeEntries[index])
+        diary?.placeEntries?.let {
+            items(it.size) { index ->
+                PlaceCard(placeEntry = diary!!.placeEntries[index])
+            }
         }
 
         item {
@@ -119,15 +141,17 @@ fun ReadDiaryPage(
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
             ) {
-                Text(
-                    text = diary.totalReview,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 20.sp, // 글씨 크기 증가
-                        lineHeight = 28.sp // 읽기 편하게 행간 추가
-                    ),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(16.dp) // 카드 안쪽 여백 추가
-                )
+                diary?.let {
+                    Text(
+                        text = it.totalReview,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = 20.sp, // 글씨 크기 증가
+                            lineHeight = 28.sp // 읽기 편하게 행간 추가
+                        ),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(16.dp) // 카드 안쪽 여백 추가
+                    )
+                }
             }
         }
     }

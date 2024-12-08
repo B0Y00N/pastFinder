@@ -55,6 +55,7 @@ class ApiClient(private val baseUrl: String) {
         val request = Request.Builder()
             .url(url)
             .post(body)
+            .addHeader("Content-Type","application/json")
             .build()
 
         client.newCall(request).enqueue(object : Callback {
