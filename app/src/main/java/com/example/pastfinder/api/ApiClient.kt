@@ -38,7 +38,7 @@ class ApiClient(private val baseUrl: String) {
                             callback(false, "잘못된 아이디 혹은 비밀번호입니다!")
                         }
                     }
-                    callback(true, "성공!")
+                    callback(true, "회원가입 성공!")
                 } else {
                     callback(false, "Error: ${response.body}")
                 }

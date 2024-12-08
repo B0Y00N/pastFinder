@@ -60,6 +60,8 @@ fun RegisterPage(
         when (registrationStatus) {
             is RegistrationStatus.Success -> {
                 Toast.makeText(context, (registrationStatus as RegistrationStatus.Success).message, Toast.LENGTH_SHORT).show()
+                email = ""
+                password = ""
             }
             is RegistrationStatus.Error -> {
                 Toast.makeText(context, (registrationStatus as RegistrationStatus.Error).message, Toast.LENGTH_SHORT).show()

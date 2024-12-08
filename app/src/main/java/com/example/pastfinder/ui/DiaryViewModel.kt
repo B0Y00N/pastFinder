@@ -27,8 +27,10 @@ import kotlin.coroutines.resumeWithException
 
 class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
+    private val _operationStatus = MutableStateFlow<OperationStatus>(OperationStatus.Idle)
+    val operationStatus: StateFlow<OperationStatus> = _operationStatus.asStateFlow()
+
     private var diaryList by mutableStateOf<List<String>>(emptyList())
-    private var diarySet by mutableStateOf<Set<DiaryUiState>>(emptySet())
     // 선택된 날짜의 Diary state
     private var _uiState = MutableStateFlow(DiaryUiState())
     var uiState: StateFlow<DiaryUiState> = _uiState.asStateFlow()
@@ -36,6 +38,7 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
     var placeFinderState by mutableStateOf(PlaceFinderEntry())
         private set
 
+    // 서버로부터 일기 적힌 날짜 받아오는 함수
     fun fetchDiaries() {
         apiClient.getElements("/diary/list") { success, response ->
             if (success) {
@@ -194,24 +197,20 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
     fun saveDiary() {
         viewModelScope.launch {
             try {
+                _operationStatus.value = OperationStatus.Loading
                 val jsonBody = mapDiaryUiStateToContents(_uiState.value)
                 apiClient.postElement(
                     endpoint = "/diary/write",
                     jsonBody = jsonBody,
                     date = _uiState.value.date,
-                    callback = {
-                            success, response ->
-                        if (success) {
-
-                        } else {
-
-                        }
-                    })
+                    callback = { success, _ ->
+                        _operationStatus.value = if (success) OperationStatus.Success else OperationStatus.Error
+                    }
+                )
             } catch (e: Exception) {
-
+                _operationStatus.value = OperationStatus.Error
             }
         }
-        diarySet = diarySet.plus(_uiState.value)
     }
 
     // 일기 읽을 때
@@ -276,18 +275,26 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
         val idToRemove = diaryList.find { it == date }
         if (idToRemove != null) {
-            apiClient.delete(
-                endpoint = "/diary/delete",
-                date = idToRemove,
-                callback = { success, response->
-                    if (success) {
-
-                    } else {
-
-                    }
-                })
+            viewModelScope.launch {
+                try {
+                    _operationStatus.value = OperationStatus.Loading
+                    apiClient.delete(
+                        endpoint = "/diary/delete",
+                        date = idToRemove,
+                        callback = { success, _ ->
+                            _operationStatus.value = if (success) OperationStatus.Success else OperationStatus.Error
+                        }
+                    )
+                } catch (e: Exception) {
+                    _operationStatus.value = OperationStatus.Error
+                }
+            }
         }
-        fetchDiaries()
+
+    }
+
+    fun resetOperationStatus() {
+        _operationStatus.value = OperationStatus.Idle
     }
 }
 
@@ -313,7 +320,7 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
         "x": ${location.latitude},
         "y": ${location.longitude},
         "images": "$images",
-        "placeDescription": "${location.placeDescription}",
+        "placeDescription": "${location.placeDescription.trimIndent()}",
         "simpleReview": "${location.simpleReview}"
         },
     """.trimIndent()
@@ -325,12 +332,19 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
 
     val contents = """
         {
-        "title": "${diaryUiState.title}",
-        "review": "${diaryUiState.totalReview}",
+        "title": "${diaryUiState.title.trimIndent()}",
+        "review": "${diaryUiState.totalReview.trimIndent()}",
         "date": "${diaryUiState.date}",
         "map": [$locations]
         }
     """.trimIndent()
 
     return contents
+}
+
+sealed class OperationStatus {
+    object Idle : OperationStatus()
+    object Loading : OperationStatus()
+    object Success : OperationStatus()
+    object Error : OperationStatus()
 }

@@ -27,18 +27,24 @@ import java.util.Locale
 
 class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
 
+    private val _operationStatus = MutableStateFlow<OperationStatus>(OperationStatus.Idle)
+    val operationStatus: StateFlow<OperationStatus> = _operationStatus.asStateFlow()
+
     var goalList by mutableStateOf<List<Goal>>(emptyList())
+        private set
 
     private var _goalState = MutableStateFlow(Goal())
     var goalState: StateFlow<Goal> = _goalState.asStateFlow()
 
     fun fetchReminders() {
+        _operationStatus.value = OperationStatus.Loading
         apiClient.getElements("/reminder/get") { success, response ->
             if (success) {
                 val gson = Gson()
                 val reminderIdList: List<Goal> =
                     gson.fromJson(response, Array<Goal>::class.java).toList()
                 goalList = reminderIdList
+                _operationStatus.value = OperationStatus.Success
             } else {
 
             }
@@ -89,30 +95,18 @@ class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
     fun deleteGoal(index: Int) {
         viewModelScope.launch {
             try {
+                _operationStatus.value = OperationStatus.Loading
                 apiClient.delete(
                     endpoint = "/reminder/delete",
-                    callback = { success, response ->
-                        if (success) {
-
-                        } else {
-
-                        }
+                    callback = { success, _ ->
+                        fetchReminders()
+                        _operationStatus.value = if (success) OperationStatus.Success else OperationStatus.Error
                     },
                     id = goalList.get(index).id
                 )
             } catch (e: Exception) {
-
+                _operationStatus.value = OperationStatus.Error
             }
-        }
-        fetchReminders()
-
-        val updatedGoals = goalList.toMutableList().apply {
-            removeAt(index)
-        }
-        if(updatedGoals.isEmpty()){
-            goalList = emptyList()
-        } else {
-            goalList = updatedGoals
         }
     }
 
@@ -144,5 +138,9 @@ class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
     fun getCurrentDate(): String {
         val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
         return formatter.format(Date())
+    }
+
+    fun resetOperationStatus() {
+        _operationStatus.value = OperationStatus.Idle
     }
 }

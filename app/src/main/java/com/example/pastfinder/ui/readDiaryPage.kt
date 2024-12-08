@@ -180,7 +180,7 @@ fun PlaceCard(placeEntry: PlaceEntry) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = if (placeEntry.placeName.isNotBlank()) placeEntry.placeName else "${placeEntry.id}번째 장소",
+                    text = placeEntry.placeName ,
                     fontSize = 24.sp,
                     textAlign = TextAlign.Left
                 )
@@ -244,6 +244,12 @@ fun PlaceCard(placeEntry: PlaceEntry) {
                 // 장소 설명
                 Text(
                     text = placeEntry.placeDescription,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = placeEntry.simpleReview,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

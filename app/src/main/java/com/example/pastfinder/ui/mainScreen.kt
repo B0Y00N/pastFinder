@@ -2,6 +2,7 @@ package com.example.pastfinder.ui
 
 
 import android.widget.CalendarView
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -63,6 +65,8 @@ fun MainScreen(
         reminderViewModel.fetchReminders()  // 리마인더 데이터 가져오기
     }
 
+    val operationStatus by reminderViewModel.operationStatus.collectAsState()
+
     val formatter = SimpleDateFormat("yyyy-MM-dd", Locale("ko", "KR"))
     val date = Date()
 
@@ -77,6 +81,43 @@ fun MainScreen(
     var isReminderClicked by rememberSaveable { mutableStateOf(false) }
     var reminderIndex by rememberSaveable { mutableStateOf(-1) }
     var isReminderEndDate by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(operationStatus) {
+        when (operationStatus) {
+            is OperationStatus.Loading -> {
+                // 로딩 상태 표시
+            }
+            is OperationStatus.Success -> {
+                // 성공 시 동작 처리
+                if(reminderViewModel.goalList.isNotEmpty()) {
+                    reminderViewModel.goalList.forEachIndexed{ index, goal ->
+                        // 종료 날짜가 오늘인 goal 존재하는지 검사
+                        if(goal.endDate.equals(reminderViewModel.getCurrentDate())) {
+                            isReminderEndDate = true
+                            reminderIndex = index
+                        }
+                    }
+                }
+                reminderViewModel.resetOperationStatus()
+            }
+            is OperationStatus.Error -> {
+                // 에러 메시지 표시
+                diaryViewModel.resetOperationStatus()
+            }
+            else -> {
+                if(reminderViewModel.goalList.isNotEmpty()) {
+                    reminderViewModel.goalList.forEachIndexed{ index, goal ->
+                        // 종료 날짜가 오늘인 goal 존재하는지 검사
+                        if(goal.endDate.equals(reminderViewModel.getCurrentDate())) {
+                            isReminderEndDate = true
+                            reminderIndex = index
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -224,16 +265,6 @@ fun MainScreen(
 
 
                 }
-            }
-        }
-    }
-
-    if(reminderViewModel.goalList.isNotEmpty()) {
-        reminderViewModel.goalList.forEachIndexed{ index, goal ->
-            // 종료 날짜가 오늘인 goal 존재하는지 검사
-            if(goal.endDate.equals(reminderViewModel.getCurrentDate())) {
-                isReminderEndDate = true
-                reminderIndex = index
             }
         }
     }

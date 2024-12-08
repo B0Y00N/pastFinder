@@ -4,10 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,7 +71,7 @@ fun WriteDiaryPage(
     month: String,
     day: String
 ) {
-    val date = "$year-$month-$day"
+    val operationStatus by diaryViewModel.operationStatus.collectAsState()
 
     // 상태 변수 선언
     val diaryUiState by diaryViewModel.uiState.collectAsState()
@@ -87,7 +90,23 @@ fun WriteDiaryPage(
             }
         }
 
-
+    when (operationStatus) {
+        is OperationStatus.Loading -> {
+            // 로딩 상태 표시
+            CircularProgressIndicator()
+        }
+        is OperationStatus.Success -> {
+            // 성공 시 동작 처리
+            navController.navigateUp()
+            diaryViewModel.resetOperationStatus()
+        }
+        is OperationStatus.Error -> {
+            // 에러 메시지 표시
+            Toast.makeText(context, "작업에 실패했습니다.", Toast.LENGTH_SHORT).show()
+            diaryViewModel.resetOperationStatus()
+        }
+        else -> { /* Idle 상태 처리 안함 */ }
+    }
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
@@ -200,7 +219,6 @@ fun WriteDiaryPage(
             Button(
                 onClick = { /* 저장 로직 구현 */
                     diaryViewModel.saveDiary()
-                    navController.navigateUp()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,7 +245,8 @@ fun PlaceEntryCard(
         shape = RoundedCornerShape(14.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp, 16.dp, 10.dp, 16.dp),
+            .padding(10.dp, 16.dp, 10.dp, 16.dp)
+            .clickable { isExpanded = !isExpanded },
         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
@@ -246,18 +265,8 @@ fun PlaceEntryCard(
                 Text(
                     text = if (placeEntry.placeName.isNotBlank()) placeEntry.placeName else "${placeEntry.id}번째 장소",
                     fontSize = 24.sp,
-                    textAlign = TextAlign.Left
+                    textAlign = TextAlign.Center
                 )
-
-
-
-                // 확장/축소 버튼
-                IconButton(onClick = { isExpanded = !isExpanded }) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "축소" else "확장"
-                    )
-                }
             }
 
 
