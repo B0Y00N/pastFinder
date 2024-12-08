@@ -27,7 +27,6 @@ import java.util.Locale
 
 class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
 
-    private var goalIdList by mutableStateOf<List<Long>>(emptyList())
     var goalList by mutableStateOf<List<Goal>>(emptyList())
 
     private var _goalState = MutableStateFlow(Goal())
@@ -89,22 +88,17 @@ class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
     // Goal 삭제하는 함수
     fun deleteGoal(index: Int) {
         viewModelScope.launch {
-            val jsonBody = """
-                {
-                "id": ${goalIdList.get(index)}
-                }
-            """.trimIndent()
             try {
                 apiClient.delete(
                     endpoint = "/reminder/delete",
-                    jsonBody = jsonBody,
                     callback = { success, response ->
                         if (success) {
 
                         } else {
 
                         }
-                    }
+                    },
+                    id = goalList.get(index).id
                 )
             } catch (e: Exception) {
 

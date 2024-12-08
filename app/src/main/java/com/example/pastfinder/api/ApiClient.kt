@@ -97,17 +97,19 @@ class ApiClient(private val baseUrl: String) {
         })
     }
 
-    fun delete(endpoint: String, jsonBody: String? = "", callback: (Boolean, String) -> Unit, date: String = "") {
-        val url = if (date.isEmpty()) "$baseUrl$endpoint" else "$baseUrl$endpoint/$userId/$date"
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-
-
-        val body = if (jsonBody?.isNotEmpty() == true) jsonBody.toRequestBody(mediaType) else null
-
+    fun delete(endpoint: String, jsonBody: String? = "", callback: (Boolean, String) -> Unit, date: String = "", id: Long = -1) {
+        val url: String
+        if (date.isNotEmpty()) {
+            url = "$baseUrl$endpoint/$userId/$date"
+        } else if (id.toInt() != -1) {
+            url = "$baseUrl$endpoint/$id"
+        } else {
+            url = "$baseUrl$endpoint"
+        }
 
         val requestBuilder = Request.Builder()
             .url(url)
-            .delete(body)
+            .delete()
 
 
         val request = requestBuilder.build()

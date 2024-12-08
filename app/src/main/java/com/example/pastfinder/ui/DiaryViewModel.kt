@@ -230,7 +230,7 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
                         // PlaceEntry 리스트 생성
                         val places = diaryResponse.map.mapIndexed { index, item ->
                             val images = if (item.images.isNotEmpty()) {
-                                item.images.split(",") // 이미지가 쉼표로 구분된 문자열이라고 가정
+                                item.images.split(" /parsing/").filter { it.isNotEmpty() } // 이미지가 쉼표로 구분된 문자열이라고 가정
                             } else {
                                 emptyList()
                             }
@@ -273,13 +273,12 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
     // 일기 삭제
     fun deleteDiary(date: String) {
-        val diaryToRemove = diarySet.find { it.date == date }
+
         val idToRemove = diaryList.find { it == date }
         if (idToRemove != null) {
-            // endpoint 수정해야함
             apiClient.delete(
                 endpoint = "/diary/delete",
-                date = diaryToRemove!!.date,
+                date = idToRemove,
                 callback = { success, response->
                     if (success) {
 
@@ -289,8 +288,6 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
                 })
         }
         fetchDiaries()
-
-        diarySet = diarySet.minus(diaryToRemove!!)
     }
 }
 
