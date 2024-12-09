@@ -108,6 +108,7 @@ class ReminderViewModel(private val apiClient: ApiClient): ViewModel() {
                 _operationStatus.value = OperationStatus.Error
             }
         }
+        goalList = goalList.minus(goalList[index])
     }
 
     // 목표 내용 update하는 함수
