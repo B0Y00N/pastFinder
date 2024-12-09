@@ -270,6 +270,8 @@ fun PlaceEntryCard(
                 )
                 Spacer(modifier = Modifier.padding(15.dp))
             }
+
+
             // 확장된 카드 내용
             if (isExpanded) {
                 // 이미지 표시
