@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.MarkerState
@@ -72,7 +73,8 @@ fun MapsScreenWithRoute(
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState
+                cameraPositionState = cameraPositionState,
+                uiSettings = MapUiSettings(mapToolbarEnabled = false)
             ) {
                 // 각 위치에 마커 추가 및 한줄평 표시
                 diaryViewModel.uiState.value.placeEntries.forEach { placeEntry ->

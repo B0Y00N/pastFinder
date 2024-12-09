@@ -51,7 +51,7 @@ class MapSearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 항상 Places API를 초기화합니다.
+        // Places API 초기화
         if (!Places.isInitialized()) {
             Places.initialize(applicationContext, "AIzaSyAYBaY6MNaZyAlVUOcADqOZC9jBnSC1T2E")
         }
