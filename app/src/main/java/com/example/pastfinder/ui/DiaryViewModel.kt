@@ -229,16 +229,17 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
                         // PlaceEntry 리스트 생성
                         val places = diaryResponse.map.mapIndexed { index, item ->
                             val modifiedReview = item.placeDescription.replace("/enter/", "\n")
+                            val modifiedSimpleReview = item.simpleReview.replace("/enter/","\n")
                             val images = if (item.images.isNotEmpty()) {
                                 item.images.split(" /parsing/").filter { it.isNotEmpty() } // 이미지가 쉼표로 구분된 문자열이라고 가정
                             } else {
                                 emptyList()
                             }
                             PlaceEntry(
-                                id = index,
+                                id = index + 1,
                                 placeName = item.name,
                                 placeDescription = modifiedReview,
-                                simpleReview = item.simpleReview,
+                                simpleReview = modifiedSimpleReview,
                                 latitude = item.x,
                                 longitude = item.y,
                                 images = images
@@ -251,7 +252,7 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
                         // DiaryUiState 생성
                         val diary = DiaryUiState(
                             date = date,
-                            title = diaryResponse.title,
+                            title = modifiedTitle,
                             totalReview = modifiedTotalReview,
                             placeEntries = places
                         )
@@ -295,6 +296,7 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
             }
         }
 
+        diaryList = diaryList.minus(date)
     }
 
     fun resetOperationStatus() {
@@ -310,9 +312,9 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
 
     for (item in diaryUiState.placeEntries) {
         var modifiedString = item.placeDescription.replace("\n", "/enter/")
-        modifiedPlaceDescriptions.plus(modifiedString)
+        modifiedPlaceDescriptions = modifiedPlaceDescriptions.plus(modifiedString)
         modifiedString = item.simpleReview.replace("\n", "/enter/")
-        modifiedSimpleReviews.plus(modifiedString)
+        modifiedSimpleReviews = modifiedSimpleReviews.plus(modifiedString)
     }
 
     var locations = ""
