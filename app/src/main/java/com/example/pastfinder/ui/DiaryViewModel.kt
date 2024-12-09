@@ -228,6 +228,7 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 
                         // PlaceEntry 리스트 생성
                         val places = diaryResponse.map.mapIndexed { index, item ->
+                            val modifiedReview = item.placeDescription.replace("/enter/", "\n")
                             val images = if (item.images.isNotEmpty()) {
                                 item.images.split(" /parsing/").filter { it.isNotEmpty() } // 이미지가 쉼표로 구분된 문자열이라고 가정
                             } else {
@@ -236,7 +237,7 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
                             PlaceEntry(
                                 id = index,
                                 placeName = item.name,
-                                placeDescription = item.placeDescription,
+                                placeDescription = modifiedReview,
                                 simpleReview = item.simpleReview,
                                 latitude = item.x,
                                 longitude = item.y,
@@ -244,11 +245,14 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
                             )
                         }
 
+                        val modifiedTitle = diaryResponse.title.replace("/enter/","\n")
+                        val modifiedTotalReview = diaryResponse.review.replace("/enter/","\n")
+
                         // DiaryUiState 생성
                         val diary = DiaryUiState(
                             date = date,
                             title = diaryResponse.title,
-                            totalReview = diaryResponse.review,
+                            totalReview = modifiedTotalReview,
                             placeEntries = places
                         )
 
@@ -299,11 +303,22 @@ class DiaryViewModel(private val apiClient: ApiClient) : ViewModel() {
 }
 
 fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
-// Contents 객체 생성
+    val modifiedTitle = diaryUiState.title.replace("\n","/enter/")
+    val modifiedTotalReview = diaryUiState.totalReview.replace("\n", "/enter/")
+    var modifiedPlaceDescriptions: List<String> = emptyList()
+    var modifiedSimpleReviews: List<String> = emptyList()
+
+    for (item in diaryUiState.placeEntries) {
+        var modifiedString = item.placeDescription.replace("\n", "/enter/")
+        modifiedPlaceDescriptions.plus(modifiedString)
+        modifiedString = item.simpleReview.replace("\n", "/enter/")
+        modifiedSimpleReviews.plus(modifiedString)
+    }
 
     var locations = ""
-
+    var i = 0
     for (location in diaryUiState.placeEntries) {
+
         var images = ""
         for(image in location.images) {
             images += """
@@ -320,10 +335,11 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
         "x": ${location.latitude},
         "y": ${location.longitude},
         "images": "$images",
-        "placeDescription": "${location.placeDescription.trimIndent()}",
-        "simpleReview": "${location.simpleReview}"
+        "placeDescription": "${modifiedPlaceDescriptions[i]}",
+        "simpleReview": "${modifiedSimpleReviews[i]}"
         },
     """.trimIndent()
+        i++
     }
 
     if (locations.length >= 2) {
@@ -332,8 +348,8 @@ fun mapDiaryUiStateToContents(diaryUiState: DiaryUiState): String {
 
     val contents = """
         {
-        "title": "${diaryUiState.title.trimIndent()}",
-        "review": "${diaryUiState.totalReview.trimIndent()}",
+        "title": "$modifiedTitle",
+        "review": "$modifiedTotalReview",
         "date": "${diaryUiState.date}",
         "map": [$locations]
         }
